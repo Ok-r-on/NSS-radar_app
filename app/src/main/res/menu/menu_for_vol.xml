@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="Home"
+        android:id="@+id/navVolHome"
+        android:icon="@drawable/dashboard"/>
+    <item
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="Schedule"
+        android:id="@+id/navVolSched"
+        android:icon="@drawable/schedule"/>
+
+    <item
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="Notice"
+        android:id="@+id/navVolNotice"
+        android:icon="@drawable/notice"/>
+</menu>

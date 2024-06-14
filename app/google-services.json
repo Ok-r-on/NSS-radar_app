@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "875939083338",
+    "project_id": "nss-fbdb",
+    "storage_bucket": "nss-fbdb.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:875939083338:android:9a66b7758f30ac94dda2b3",
+        "android_client_info": {
+          "package_name": "com.example.nss"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB7mZom0aoSbZT7Ueoi9QATwTYQK22XY_k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

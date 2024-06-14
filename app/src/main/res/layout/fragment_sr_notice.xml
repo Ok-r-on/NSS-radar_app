@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".senior.notice.SrNotice">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/txtNOTICEBOARD"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="10dp"
+            android:fontFamily="@font/poppins"
+            android:text="NOTICE BOARD"
+            android:textColor="@color/lavendar"
+            android:textSize="28sp"></TextView>
+
+
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/search_notes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/txtNOTICEBOARD"
+            android:layout_centerHorizontal="true"
+            android:layout_marginHorizontal="10dp"
+            android:background="@drawable/search_notes_design"
+            app:iconifiedByDefault="false"
+            app:queryHint="Search Here...."
+            app:searchIcon="@drawable/search" />
+
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:layout_below="@id/search_notes"
+            android:id="@+id/swipetorefersh"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/NoticeListSenior"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_below="@id/search_notes"
+                android:layout_centerInParent="true"
+                android:layout_marginTop="10dp" />
+
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/addNotesFabBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
+            android:contentDescription="fab button for notice"
+            android:clickable="true"
+            android:backgroundTint="@color/lavendar"
+            android:src="@drawable/add" />
+    </RelativeLayout>
+
+</FrameLayout>

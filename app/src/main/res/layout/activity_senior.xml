@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".senior.Senior">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbarforsr"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/lavendar"
+        app:title="Name"
+        app:logo="@drawable/whiteperson"
+        app:titleMarginStart="25dp"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"/>
+
+    <androidx.viewpager.widget.ViewPager
+        android:id="@+id/view_pagerSr"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"/>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavBarSr"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:background="@drawable/custom_edittext"
+        app:menu="@menu/menu_for_sr" />
+
+</LinearLayout>
