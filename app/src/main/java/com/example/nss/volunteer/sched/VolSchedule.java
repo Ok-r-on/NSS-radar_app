@@ -8,7 +8,6 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,18 +24,17 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.Date;
 
-//TODO set up a filter date wise.
 public class VolSchedule extends Fragment {
-
     RecyclerView recyclerView;
     ArrayList<Schedule> list;
-    SwipeRefreshLayout swipetorefreshsched_vol;
     VolScheduleAdapter volScheduleAdapter;
     DatabaseReference databaseReferenceSched;
     ImageButton setDateSched;
     FirebaseDatabase db;
+    long selectedTimestamp;
     public VolSchedule() {
         // Required empty public constructor
     }
@@ -53,7 +51,29 @@ public class VolSchedule extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         setDateSched = view.findViewById(R.id.setDateSched_vol);
-        setDateSched.setOnClickListener(v -> showDatePickerDialog());
+        setDateSched.setOnClickListener(v -> {
+            ArrayList<Schedule> fetchedschedule = new ArrayList<>();
+            Calendar calendar = Calendar.getInstance();
+            DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(), (view1, year, month, dayOfMonth) -> {
+                calendar.set(year, month, dayOfMonth);
+                Date selectedDate = calendar.getTime();
+                selectedTimestamp = selectedDate.getTime();
+                for (Schedule schedule : list) {
+                    long eventTimestamp = schedule.getTmpstmp();
+                    if (eventTimestamp >= selectedTimestamp) {
+                        fetchedschedule.add(schedule);
+                    }
+                }
+                //used list.sort instead of collection.sort and
+                fetchedschedule.sort(Comparator.comparingLong(Schedule::getTmpstmp));
+                // Clear existing items from list
+                list.clear();
+                list.addAll(fetchedschedule);
+                volScheduleAdapter.notifyDataSetChanged();
+            }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+            datePickerDialog.show();
+
+        });
 
         recyclerView = view.findViewById(R.id.ScheduleListVol);
         db= FirebaseDatabase.getInstance();
@@ -63,62 +83,16 @@ public class VolSchedule extends Fragment {
         list=new ArrayList<>();
         volScheduleAdapter = new VolScheduleAdapter(getContext(),list);
         recyclerView.setAdapter(volScheduleAdapter);
-        swipetorefreshsched_vol=view.findViewById(R.id.swipetorefreshsched_vol);
-
-        swipetorefreshsched_vol.setOnRefreshListener(() -> {
-            databaseReferenceSched.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    ArrayList<Schedule> fetchedschedule = new ArrayList<>();
-                    if (dataSnapshot.exists() && dataSnapshot.hasChildren()) {
-                        list.clear();
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            if(snapshot.exists() && snapshot.hasChildren()){
-                                for(DataSnapshot shot : snapshot.getChildren()){
-                                    if(shot.exists()){
-                                        Schedule s = shot.getValue(Schedule.class);
-
-                                        boolean isSchedExists = false;
-                                        for (Schedule schedule : list) {
-                                            if (schedule.getEventDate().equals(s.getEventDate()) &&
-                                                    schedule.getEventLoc().equals(s.getEventLoc()) &&
-                                                    schedule.getEventTime().equals(s.getEventTime()) &&
-                                                    schedule.getEventType().equals(s.getEventType()) &&
-                                                    schedule.getEventName().equals(s.getEventName())) {
-                                                isSchedExists = true;
-                                                break;
-                                            }
-                                        }
-                                        if (!isSchedExists) {
-                                            fetchedschedule.add(s);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        list.addAll(fetchedschedule);
-                    } else {
-                        list.clear();
-                    }
-                    volScheduleAdapter.notifyDataSetChanged();
-
-                }
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-                }
-            });
-            swipetorefreshsched_vol.setRefreshing(false);
-        });
 
         databaseReferenceSched.addValueEventListener(new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
                 ArrayList<Schedule> fetchedschedule = new ArrayList<>();
-                if (dataSnapshot.exists() && dataSnapshot.hasChildren()) {
+                if (snapshot.exists() && snapshot.hasChildren()) {
                     list.clear();
-                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        if(snapshot.exists() && snapshot.hasChildren()){
-                            for(DataSnapshot shot : snapshot.getChildren()){
+                    for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                        if(dataSnapshot.exists() && dataSnapshot.hasChildren()){
+                            for(DataSnapshot shot : dataSnapshot.getChildren()){
                                 if(shot.exists()){
                                     Schedule s = shot.getValue(Schedule.class);
 
@@ -140,24 +114,19 @@ public class VolSchedule extends Fragment {
                             }
                         }
                     }
+                    fetchedschedule.sort((s1, s2) -> Long.compare(s2.getTmpstmp(), s1.getTmpstmp()));
                     list.addAll(fetchedschedule);
                 } else {
                     list.clear();
                 }
                 volScheduleAdapter.notifyDataSetChanged();
             }
+
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
+
             }
         });
-    }
-    private void showDatePickerDialog() {
-        Calendar calendar = Calendar.getInstance();
-        DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(), (view, year, month, dayOfMonth) -> {calendar.set(year, month, dayOfMonth);
-            Date selectedDate = calendar.getTime();
-            volScheduleAdapter.filterByDate(selectedDate);
-            }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)
-        );
-        datePickerDialog.show();
+
     }
 }

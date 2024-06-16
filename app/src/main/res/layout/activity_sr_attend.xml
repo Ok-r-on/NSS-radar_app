@@ -22,13 +22,16 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            tools:ignore="UseCompoundDrawables">
 
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:paddingRight="15dp"
-                android:src="@drawable/baseline_keyboard_double_arrow_right_24" />
+                android:paddingEnd="15dp"
+                android:paddingStart="0dp"
+                android:src="@drawable/baseline_keyboard_double_arrow_right_24"
+                android:contentDescription="@string/eve_name_img" />
 
             <TextView
                 android:id="@+id/attendActEN"
@@ -36,7 +39,7 @@
                 android:layout_height="match_parent"
                 android:fontFamily="@font/poppins"
                 android:gravity="center_horizontal"
-                android:text="Event Name"
+                android:text="@string/event_name"
                 android:textSize="17sp"
                 android:textStyle="bold" />
 
@@ -47,13 +50,16 @@
             android:layout_height="match_parent"
             android:layout_gravity="center_vertical"
             android:layout_marginTop="15dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            tools:ignore="UseCompoundDrawables">
 
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:paddingRight="15dp"
-                android:src="@drawable/date" />
+                android:paddingEnd="15dp"
+                android:paddingStart="0dp"
+                android:src="@drawable/date"
+                android:contentDescription="@string/eve_date_img" />
 
             <TextView
                 android:id="@+id/attendActED"
@@ -61,7 +67,7 @@
                 android:layout_height="match_parent"
                 android:fontFamily="@font/poppins"
                 android:gravity="center"
-                android:text="16|04|2024"
+                android:text="@string/date_val"
                 android:textSize="17sp" />
 
         </LinearLayout>
@@ -69,10 +75,11 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:baselineAligned="false">
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_gravity="center_vertical"
                 android:layout_weight="1"
@@ -81,15 +88,17 @@
                 <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:paddingRight="15dp"
-                    android:src="@drawable/person" />
+                    android:paddingEnd="15dp"
+                    android:paddingStart="0dp"
+                    android:src="@drawable/person"
+                    android:contentDescription="@string/present_img" />
 
                 <TextView
                     android:id="@+id/attendActpres"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:gravity="center"
-                    android:text="0"
+                    android:text="@string/_0"
                     android:textSize="17sp" />
 
                 <TextView
@@ -97,7 +106,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="5dp"
                     android:fontFamily="@font/poppins"
-                    android:text=" present"
+                    android:text="@string/present"
                     android:textSize="17sp" />
 
             </LinearLayout>
@@ -111,15 +120,17 @@
                 <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:paddingRight="5dp"
-                    android:src="@drawable/hour" />
+                    android:paddingEnd="5dp"
+                    android:paddingStart="0dp"
+                    android:src="@drawable/hour"
+                    android:contentDescription="@string/hours_img" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:fontFamily="@font/poppins"
                     android:gravity="center"
-                    android:text="Hours : "
+                    android:text="@string/hours"
                     android:textSize="17sp" />
 
                 <EditText
@@ -128,21 +139,36 @@
                     android:layout_height="wrap_content"
                     android:inputType="number"
                     android:fontFamily="@font/poppins"
-                    android:hint="max 6" />
+                    android:hint="@string/max_6"
+                    android:autofillHints=" " />
 
             </LinearLayout>
         </LinearLayout>
+
     </LinearLayout>
+
+    <androidx.appcompat.widget.SearchView
+        android:id="@+id/search_names"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/search_notes_design"
+        app:iconifiedByDefault="false"
+        android:layout_marginHorizontal="5dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout"
+        app:queryHint="Search Here...."
+        app:searchIcon="@drawable/search" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/attendactrec"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="10dp"
+        android:paddingTop="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
+        app:layout_constraintTop_toBottomOf="@+id/search_names" />
 
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -154,6 +180,7 @@
         android:src="@drawable/check"
         android:backgroundTint="@color/white"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"/>
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:contentDescription="@string/submit" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

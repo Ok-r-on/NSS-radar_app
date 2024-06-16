@@ -7,8 +7,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.View;
-import android.widget.Button;
 import android.widget.Toast;
 
 import com.example.nss.volunteer.Volunteer;
@@ -31,11 +29,11 @@ public class MainActivity extends AppCompatActivity {
             SharedPreferences.Editor editor = sharedPref.edit();
             editor.putBoolean(KEY_FIRST_TIME_LOGIN, false);
             editor.apply();
-            startActivity(new Intent(MainActivity.this, LogInActivity.class));
+            startActivity(new Intent(this, LogInActivity.class));
         } else {
             // Skip login/signup UI and navigate to main activity
             Toast.makeText(getApplicationContext(), "Welcome back!", Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(MainActivity.this, Volunteer.class));
+            startActivity(new Intent(this, Volunteer.class));
         }
     }
 }

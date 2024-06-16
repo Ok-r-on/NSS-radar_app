@@ -1,19 +1,25 @@
 package com.example.nss.model;
 
 public class Schedule {
-    String eventTime,eventName,eventType,eventLoc,eventDate;
+    private String eventTime,eventName,eventType,eventLoc,eventDate;
+    private long tmpstmp;
 
     public String getEventDate() {
         return eventDate;
     }
     public Schedule(){}
 
-    public Schedule(String date, String time, String eventName, String eventType, String eventLoc) {
+    public long getTmpstmp() {
+        return tmpstmp;
+    }
+
+    public Schedule(String date, String time, String eventName, String eventType, String eventLoc, long tmpstmp) {
         this.eventTime = time;
         this.eventDate = date;
         this.eventName = eventName;
         this.eventType = eventType;
         this.eventLoc = eventLoc;
+        this.tmpstmp=tmpstmp;
     }
 
     public String getEventTime() {

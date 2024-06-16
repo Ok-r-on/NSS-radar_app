@@ -1,31 +1,21 @@
 package com.example.nss;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.nss.model.Schedule;
 import com.example.nss.model.User;
-import com.example.nss.senior.Senior;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.SignInMethodQueryResult;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 
 import java.util.List;
 
@@ -70,75 +60,60 @@ public class SignIn extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                if (cpass.length()<6){
+                if (cpass.length()<6 && cpass.length()>0){
                     consignpass.setError("Less than 6 characters");
                 }
-            }
-        });
-        signupbtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                String username = signin_username.getText().toString().trim();
-                String email = signin_email.getText().toString().trim();
-                String pass = signin_password.getText().toString().trim();
-                cpass = consignpass.getText().toString().trim();
-
-                if (!email.isEmpty() && !username.isEmpty()) {
-                    if (!pass.isEmpty() && !cpass.isEmpty()) {
-                        if (cpass.equals(pass)) {
-                            firebaseAuth.fetchSignInMethodsForEmail(email).addOnCompleteListener(new OnCompleteListener<SignInMethodQueryResult>() {
-                                @Override
-                                public void onComplete(@NonNull Task<SignInMethodQueryResult> task) {
-                                    if (task.isSuccessful()) {
-                                        SignInMethodQueryResult result = task.getResult();
-                                        List<String> signInMethods = result.getSignInMethods();
-                                        if (signInMethods != null && !signInMethods.isEmpty()) {
-                                                    // User already exists
-                                            Toast.makeText(SignIn.this, "Username already exists", Toast.LENGTH_SHORT).show();
-                                            startActivity(new Intent(SignIn.this, LogInActivity.class));
-                                        } else {
-                                                    // User doesn't exist, create a new account
-                                            firebaseAuth.createUserWithEmailAndPassword(email, cpass).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                                                @Override
-                                                public void onComplete(@NonNull Task<AuthResult> task) {
-                                                    if (task.isSuccessful()) {
-                                                        User user = new User(username, email, pass);
-                                                        databaseReference.child(username).setValue(user).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                                            @Override
-                                                            public void onComplete(@NonNull Task<Void> task) {
-                                                                Toast.makeText(SignIn.this, "Sign Up Successful", Toast.LENGTH_SHORT).show();
-                                                            }
-                                                        });
-                                                        startActivity(new Intent(SignIn.this, LogInActivity.class));
-                                                    } else {
-                                                        Toast.makeText(SignIn.this, "Sign Up Failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
-                                                    }
-                                                }
-                                            });
-                                        }
-                                    } else {
-                                        Toast.makeText(SignIn.this, "Error: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
-                                    }
-                                }
-                            });
-                            // Check if username already exists
-                        } else {
-                            Toast.makeText(SignIn.this, "The passwords do not match", Toast.LENGTH_SHORT).show();
-                        }
-                    } else {
-                        Toast.makeText(SignIn.this, "Please fill in the Password/s field", Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    Toast.makeText(SignIn.this, "Please enter the email", Toast.LENGTH_SHORT).show();
+                else {
+                    // If it doesn't match, clear any previous error message
+                    consignpass.setError(null);
                 }
             }
         });
-        loginredirect.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startActivity(new Intent(SignIn.this, LogInActivity.class));
+        signupbtn.setOnClickListener(view -> {
+
+            String username = signin_username.getText().toString().trim();
+            String email = signin_email.getText().toString().trim();
+            String pass = signin_password.getText().toString().trim();
+            cpass = consignpass.getText().toString().trim();
+
+            if (!email.isEmpty() && !username.isEmpty()) {
+                if (!pass.isEmpty() && !cpass.isEmpty()) {
+                    if (cpass.equals(pass)) {
+                        firebaseAuth.fetchSignInMethodsForEmail(email).addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                SignInMethodQueryResult result = task.getResult();
+                                List<String> signInMethods = result.getSignInMethods();
+                                if (signInMethods != null && !signInMethods.isEmpty()) {
+                                            // User already exists
+                                    Toast.makeText(SignIn.this, "Username already exists", Toast.LENGTH_SHORT).show();
+                                    startActivity(new Intent(SignIn.this, LogInActivity.class));
+                                } else {
+                                            // User doesn't exist, create a new account
+                                    firebaseAuth.createUserWithEmailAndPassword(email, cpass).addOnCompleteListener(task1 -> {
+                                        if (task1.isSuccessful()) {
+                                            User user = new User(username, email, pass);
+                                            databaseReference.child(username).setValue(user).addOnCompleteListener(task11 -> Toast.makeText(SignIn.this, "Sign Up Successful", Toast.LENGTH_SHORT).show());
+                                            startActivity(new Intent(SignIn.this, LogInActivity.class));
+                                        } else {
+                                            Toast.makeText(SignIn.this, "Sign Up Failed: " + task1.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                                }
+                            } else {
+                                Toast.makeText(SignIn.this, "Error: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                        // Check if username already exists
+                    } else {
+                        Toast.makeText(SignIn.this, "The passwords do not match", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(SignIn.this, "Please fill in the Password/s field", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(SignIn.this, "Please enter the email", Toast.LENGTH_SHORT).show();
             }
         });
+        loginredirect.setOnClickListener(view -> startActivity(new Intent(SignIn.this, LogInActivity.class)));
     }
 }

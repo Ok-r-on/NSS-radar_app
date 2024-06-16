@@ -2,6 +2,7 @@ package com.example.nss.senior;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -12,6 +13,7 @@ import android.widget.TextView;
 
 import com.example.nss.R;
 import com.example.nss.model.User;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -22,7 +24,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 
 
-//TODO: if opted for editing (SHOULD WORK)
+//TODO: search names
 
 public class SrAttendActivity extends AppCompatActivity {
     TextView attendActpres,attendActED,attendActEN;
@@ -32,6 +34,7 @@ public class SrAttendActivity extends AppCompatActivity {
     FloatingActionButton submitattend;
     ArrayList<User> list;
     int attendanceCount;
+    SearchView search_names;
     DatabaseReference databaseReferenceUser,scheduleReference;
     SrAttendActivityAdapter srAttendActivityAdapter;
 
@@ -48,6 +51,7 @@ public class SrAttendActivity extends AppCompatActivity {
         recyclerView.setHasFixedSize(true);
         db=FirebaseDatabase.getInstance();
         databaseReferenceUser=db.getReference("User");
+        search_names=findViewById(R.id.search_names);
 
         Intent intent=getIntent();
         String EveName=intent.getStringExtra("EventName");
@@ -64,46 +68,73 @@ public class SrAttendActivity extends AppCompatActivity {
         attendActED.setText(EDate);
         attendActEN.setText(EveName);
 
-        if(fr_att.equals("true")){
-            DatabaseReference scheduleReference = db.getReference("Schedule").child(EDate).child(EveName);
+        if (fr_att != null && fr_att.equals("true")) {
+            DatabaseReference scheduleReference = null;
+            if (EDate != null && EveName != null) {
+                scheduleReference = db.getReference("Schedule").child(EDate).child(EveName);
+            }
 
-            scheduleReference.child("hours").addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    if (dataSnapshot.exists()) {
-                        String hrs = dataSnapshot.getValue(String.class);
-                        attendActhrs.setText(hrs);
-                    } else {
-                        attendActhrs.setText("--");
+            if (scheduleReference != null) {
+                scheduleReference.child("hours").addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        if (dataSnapshot.exists()) {
+                            String hrs = dataSnapshot.getValue(String.class);
+                            attendActhrs.setText(hrs);
+                        } else {
+                            attendActhrs.setText("--");
+                        }
                     }
-                }
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-                    // Handle errors
-                }
-            });
-            scheduleReference.child("Present").addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    // Iterate through each eventDate
-                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        String username = snapshot.getKey();
-                        // Update the status of the user in the "User" database to 1
-                        databaseReferenceUser.child(username).child("status").setValue(1);
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                        // Handle errors
                     }
-                }
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-                    // Handle errors
-                }
-            });
+                });
+            }
+            if (scheduleReference != null) {
+                scheduleReference.child("Present").addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        // Iterate through each eventDate
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            String username = snapshot.getKey();
+                            // Update the status of the user in the "User" database to 1
+                            if (username != null) {
+                                databaseReferenceUser.child(username).child("status").setValue(1);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                        // Handle errors
+                    }
+                });
+            }
         }
 
+        search_names.clearFocus();
+
+        search_names.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                filterlist(newText);
+                return true;
+            }
+        });
 
         submitattend.setOnClickListener(v -> {
             String hrs= attendActhrs.getText().toString().trim();
             if(Double.parseDouble(hrs) <= 6.0 && !hrs.isEmpty()){
-                scheduleReference = db.getReference("Schedule").child(EDate).child(EveName);
+                if (EDate != null && EveName != null) {
+                    scheduleReference = db.getReference("Schedule").child(EDate).child(EveName);
+                }
                 scheduleReference.child("hours").setValue(hrs);
                 scheduleReference.child("count").setValue(String.valueOf(attendanceCount));
                 scheduleReference = scheduleReference.child("Present");
@@ -111,10 +142,7 @@ public class SrAttendActivity extends AppCompatActivity {
                     if(user.getStatus() == 1){
                         String userName = user.getName();
 
-                        scheduleReference.child(userName).setValue(userName).addOnSuccessListener(unused -> databaseReferenceUser.child(userName).child("status").setValue(0).addOnCompleteListener(task -> {
-                            if(task.isSuccessful()){
-                            }
-                        }));
+                        scheduleReference.child(userName).setValue(userName).addOnSuccessListener(unused -> databaseReferenceUser.child(userName).child("status").setValue(0).addOnCompleteListener(Task::isSuccessful));
                     }
                 }
                 finish();
@@ -138,7 +166,7 @@ public class SrAttendActivity extends AppCompatActivity {
                         User user = snapshot.getValue(User.class);
                         boolean isNameExists = false;
                         for (User u : list) {
-                            if (u.getName().equals(user.getName())) {
+                            if (user != null && u.getName().equals(user.getName())) {
                                 isNameExists = true;
                                 break;
                             }
@@ -146,16 +174,15 @@ public class SrAttendActivity extends AppCompatActivity {
                         if (!isNameExists) {
                             fetcheduser.add(user);
                         }
-                        if (user.getStatus() == 1) {
+                        if (user != null && user.getStatus() == 1) {
                             attendanceCount++;
                         }
                     }
                     list.addAll(fetcheduser);
-                    srAttendActivityAdapter.notifyDataSetChanged();
                 } else {
                     list.clear();
-                    srAttendActivityAdapter.notifyDataSetChanged();
                 }
+                srAttendActivityAdapter.notifyDataSetChanged();
                 attendActpres.setText(String.valueOf(attendanceCount));
             }
             @Override
@@ -163,6 +190,19 @@ public class SrAttendActivity extends AppCompatActivity {
             }
         });
     }
+
+    private void filterlist(String newText) {
+        ArrayList<User> filteredlist = new ArrayList<>();
+        for(User user: list){
+            if(user.getName().toLowerCase().contains(newText.toLowerCase())){
+                filteredlist.add(user);
+            }
+        }
+        if(!filteredlist.isEmpty()){
+            srAttendActivityAdapter.setFilteredList(filteredlist);
+        }
+    }
+
     public void updateUserStatus(int position, int status){
         String user = list.get(position).getName();
         databaseReferenceUser.child(user).child("status").setValue(status).addOnCompleteListener(task -> {

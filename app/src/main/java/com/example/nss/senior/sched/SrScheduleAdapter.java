@@ -33,46 +33,7 @@ public class SrScheduleAdapter extends RecyclerView.Adapter<SrScheduleAdapter.My
     public SrScheduleAdapter(Context context, ArrayList<Schedule> list) {
         this.context = context;
         this.list = list;
-        /*this.filteredList = new ArrayList<>(); // Initialize filteredList
-        this.filteredList.addAll(list);*/
     }
-   /* public void filterByDate(Date selectedDate) {
-        if (filteredList == null) {
-            filteredList = new ArrayList<>();
-        } else {
-            filteredList.clear();
-        }
-        for (Schedule schedule : list) {
-            // Convert event date string to Date object for comparison
-            Date eventDate = parseDate(schedule.getEventDate());
-            if (eventDate != null && !eventDate.before(selectedDate)) {
-                filteredList.add(schedule);
-            }
-        }
-
-        // Sort the filteredList in ascending order based on event dates
-        // Sort the filteredList in ascending order based on event dates
-        filteredList.sort((schedule1, schedule2) -> {
-            Date date1 = parseDate(schedule1.getEventDate());
-            Date date2 = parseDate(schedule2.getEventDate());
-            return date2.compareTo(date1);
-        });
-
-        // Reverse the sorted list to get the latest upcoming event at the top
-        Collections.reverse(filteredList);
-        log.d("TAG","Reaching this point");
-        notifyDataSetChanged(); // Notify adapter of data change
-    }
-    private Date parseDate(String eventDate) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd|MM|yyyy");
-        // Parse the string date into a Date object
-        try {
-            return dateFormat.parse(eventDate);
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
-
-    }*/
 
     @NonNull
     @Override

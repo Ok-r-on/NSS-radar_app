@@ -58,6 +58,11 @@ public class SrAttendActivityAdapter extends RecyclerView.Adapter<SrAttendActivi
         return list.size();
     }
 
+    public void setFilteredList(ArrayList<User> filteredlist) {
+        this.list = filteredlist;
+        notifyDataSetChanged();
+    }
+
     public static class MyViewHolder extends RecyclerView.ViewHolder {
         TextView nameofuser;
         CardView usercardview_sr;

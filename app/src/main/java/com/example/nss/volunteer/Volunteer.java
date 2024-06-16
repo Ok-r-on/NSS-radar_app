@@ -44,7 +44,6 @@ public class Volunteer extends AppCompatActivity {
 
         SharedPreferences sharedPref = getSharedPreferences(PREFS_NAME, Activity.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putBoolean(KEY_FIRST_TIME_LOGIN, true);
         editor.apply();
 
         String UserName = sharedPref.getString("UserName","");

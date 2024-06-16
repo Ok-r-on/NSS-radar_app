@@ -13,43 +13,16 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.nss.R;
 import com.example.nss.model.Schedule;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 
 
 public class VolScheduleAdapter extends RecyclerView.Adapter<VolScheduleAdapter.MyViewHolder>{
     Context context;
     ArrayList<Schedule> list;
-    ArrayList<Schedule> filteredList;
 
     public VolScheduleAdapter(Context context, ArrayList<Schedule> list) {
         this.context = context;
         this.list = list;
-        this.filteredList = new ArrayList<>(list);
-    }
-    public void filterByDate(Date selectedDate) {
-        filteredList.clear();
-        for (Schedule schedule : list) {
-            // Convert event date string to Date object for comparison
-            Date eventDate = parseDate(schedule.getEventDate());
-            if (eventDate != null && eventDate.after(selectedDate)) {
-                filteredList.add(schedule);
-            }
-        }
-        notifyDataSetChanged(); // Notify adapter of data change
-    }
-
-    private Date parseDate(String eventDate) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-        // Parse the string date into a Date object
-        try {
-            return dateFormat.parse(eventDate);
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
-
     }
 
     @NonNull

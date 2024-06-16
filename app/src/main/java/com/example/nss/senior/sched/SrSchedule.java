@@ -16,7 +16,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -45,8 +44,12 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.regex.Pattern;
 
 //TODO: optional(maybe set up a reciever to send notification to start the radar)
@@ -59,8 +62,7 @@ public class SrSchedule extends Fragment {
     RecyclerView recyclerView;
     private FusedLocationProviderClient fusedLocationClient;
     ArrayList<Schedule> list;
-    ImageButton closeradarbtn;
-    SwipeRefreshLayout swipetorefreshsched;
+    ImageButton closeradarbtn,setDateSched;
     EditText edtEventName,edtEventLoc;
     Spinner edtEventType;
     SrScheduleAdapter srScheduleAdapter;
@@ -68,8 +70,8 @@ public class SrSchedule extends Fragment {
     Button savebtn,datebtn,timebtn, radStart, radStop;
     TextView eveName,eveDate,txttimesched,txtdatesched, markinSr;
     FirebaseDatabase db;
-    ImageButton setDateSched;
     String ename,eloc,etime,edate;
+    long tmpstmp,selectedTimestamp;
 
     public SrSchedule() {
         // Required empty public constructor
@@ -94,58 +96,32 @@ public class SrSchedule extends Fragment {
         list=new ArrayList<>();
         srScheduleAdapter = new SrScheduleAdapter(getContext(),list);
         recyclerView.setAdapter(srScheduleAdapter);
-        swipetorefreshsched=view.findViewById(R.id.swipetorefreshsched);
-
-        swipetorefreshsched.setOnRefreshListener(() -> {
-            databaseReferenceSched.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    ArrayList<Schedule> fetchedschedule = new ArrayList<>();
-                    if (dataSnapshot.exists() && dataSnapshot.hasChildren()) {
-                        list.clear();
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            if(snapshot.exists() && snapshot.hasChildren()){
-                                for(DataSnapshot shot : snapshot.getChildren()){
-                                    if(shot.exists()){
-                                        Schedule s = shot.getValue(Schedule.class);
-
-                                        boolean isSchedExists = false;
-                                        for (Schedule schedule : list) {
-                                            if (schedule.getEventDate().equals(s.getEventDate()) &&
-                                                    schedule.getEventLoc().equals(s.getEventLoc()) &&
-                                                    schedule.getEventTime().equals(s.getEventTime()) &&
-                                                    schedule.getEventType().equals(s.getEventType()) &&
-                                                    schedule.getEventName().equals(s.getEventName())) {
-                                                isSchedExists = true;
-                                                break;
-                                            }
-                                        }
-                                        if (!isSchedExists) {
-                                            fetchedschedule.add(s);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        list.addAll(fetchedschedule);
-                    } else {
-                        list.clear();
-                    }
-                    srScheduleAdapter.notifyDataSetChanged();
-
-                }
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-                }
-            });
-            swipetorefreshsched.setRefreshing(false);
-        });
 
         eveName = view.findViewById(R.id.rec_en_sched);
         eveDate = view.findViewById(R.id.recdatesched);
         setDateSched=view.findViewById(R.id.setDateSched);
-        //setDateSched.setOnClickListener(v -> showDatePickerDialog());
+        setDateSched.setOnClickListener(v -> {
+            ArrayList<Schedule> fetchedschedule = new ArrayList<>();
+            Calendar calendar = Calendar.getInstance();
+            DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(), (view1, year, month, dayOfMonth) -> {
+                calendar.set(year, month, dayOfMonth);
+                Date selectedDate = calendar.getTime();
+                selectedTimestamp = selectedDate.getTime();
+                for (Schedule schedule : list) {
+                    long eventTimestamp = schedule.getTmpstmp();
+                    if (eventTimestamp >= selectedTimestamp) {
+                        fetchedschedule.add(schedule);
+                    }
+                }
+                fetchedschedule.sort(Comparator.comparingLong(Schedule::getTmpstmp));
+                // Clear existing items from list
+                list.clear();
+                list.addAll(fetchedschedule);
+                srScheduleAdapter.notifyDataSetChanged();
+            }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+            datePickerDialog.show();
 
+        });
 
         SrScheduleAdapter.setOnClickListener(new SrScheduleAdapter.OnitemClickListener() {
             @Override
@@ -313,6 +289,16 @@ public class SrSchedule extends Fragment {
                     etime=txttimesched.getText().toString().trim();
                     etype[0] =edtEventType.getSelectedItem().toString();
 
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd|MM|yyyy");
+                    try {
+                        Date date = dateFormat.parse(edate);
+                        if (date != null) {
+                            tmpstmp=date.getTime(); // Return Unix timestamp in milliseconds
+                        }
+                    } catch (ParseException e) {
+                        throw new RuntimeException(e);
+                    }
+
 
                     if (!ename.isEmpty() && !edate.isEmpty()) {
 
@@ -323,6 +309,7 @@ public class SrSchedule extends Fragment {
                                 snapshot.getRef().child(ename).child("eventType").setValue(etype[0]);
                                 snapshot.getRef().child(ename).child("eventLoc").setValue(eloc);
                                 snapshot.getRef().child(ename).child("eventDate").setValue(edate);
+                                snapshot.getRef().child(ename).child("tmpstmp").setValue(tmpstmp);
                                 snapshot.getRef().child(ename).child("eventName").setValue(ename).addOnCompleteListener(task -> {
                                     if(task.isSuccessful()){
                                         Toast.makeText(getContext(), "Successfully Updated", Toast.LENGTH_SHORT).show();
@@ -382,6 +369,7 @@ public class SrSchedule extends Fragment {
                             }
                         }
                     }
+                    fetchedschedule.sort((s1, s2) -> Long.compare(s2.getTmpstmp(), s1.getTmpstmp()));
                     list.addAll(fetchedschedule);
                 } else {
                     list.clear();
@@ -393,18 +381,6 @@ public class SrSchedule extends Fragment {
             }
         });
     }
-
-    /*private void showDatePickerDialog() {
-        Calendar calendar = Calendar.getInstance();
-        DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(), (view, year, month, dayOfMonth) ->
-        {calendar.set(year, month, dayOfMonth);
-            Date selectedDate = calendar.getTime();
-            srScheduleAdapter.filterByDate(selectedDate);
-        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)
-        );
-        datePickerDialog.show();
-    }*/
-
     public void getLocationofRoot(){
         if (ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) !=
                 PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(),

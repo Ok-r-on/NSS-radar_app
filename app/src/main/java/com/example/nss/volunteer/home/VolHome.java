@@ -3,7 +3,6 @@ package com.example.nss.volunteer.home;
 import android.Manifest;
 import android.app.Dialog;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -29,7 +28,6 @@ import android.widget.Toast;
 
 import com.example.nss.R;
 import com.example.nss.model.Locat;
-import com.example.nss.senior.SrAttendActivity;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.data.PieData;
@@ -40,8 +38,6 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -52,6 +48,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 //TODO radar testing remaining
+// 1.maybe use grid view for the display of four areas
 public class VolHome extends Fragment {
     private static final int REQUEST_CODE = 99;
     Button mark;
@@ -61,16 +58,15 @@ public class VolHome extends Fragment {
     PieChart pieChart;
     CardView radarcard;
     String UserName;
-    TextView totalhrsofuser,AB1perc,AB2perc,Colperc,Uniperc;
+    TextView totalhrsofuser,AB1perc,AB2perc,Colperc,Uniperc,marksuc;
     ProgressBar prBarAB1,prBarAB2,prBarCol,prBarUni;
     Dialog dialog;
-    private static final float VICINITY_RADIUS = 10.0f; // Vicinity radius in meters
+    private static final float VICINITY_RADIUS = 10.0f;
 
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationRequest locationRequest;
     private LocationCallback locationCallback;
     private static final String PREFS_NAME = "MyPrefs";
-    TextView marksuc;
     public VolHome() {
         // Required empty public constructor
     }
@@ -117,9 +113,7 @@ public class VolHome extends Fragment {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if(snapshot.exists()){
                     radarcard.setVisibility(View.VISIBLE);
-                    radarcard.setOnClickListener(v -> {
-                        showmarkingdialog();
-                    });
+                    radarcard.setOnClickListener(v -> showmarkingdialog());
                 }
                 else {
                     radarcard.setVisibility(View.GONE);
@@ -161,13 +155,10 @@ public class VolHome extends Fragment {
 
         closeradarbtn_vol.setOnClickListener(v -> dialog.dismiss());
 
-        mark.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mark.setVisibility(View.GONE);
-                marksuc.setText("Marking...");
-                getandsetlocation();
-            }
+        mark.setOnClickListener(v -> {
+            mark.setVisibility(View.GONE);
+            marksuc.setText("Marking...");
+            getandsetlocation();
         });
 
         dialog.show();
@@ -224,7 +215,6 @@ public class VolHome extends Fragment {
                     }
                 }
             }
-
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
                 // Handle the error
@@ -289,20 +279,20 @@ public class VolHome extends Fragment {
     private void piechartfilling(PieChart pieChart, double[] totalHours) {
         List<PieEntry> entries = new ArrayList<>();
 
-        setPercentageText(totalHours[0],AB1perc,40, prBarAB1);
-        setPercentageText(totalHours[1],AB2perc,40,prBarAB2);
-        setPercentageText(totalHours[2],Colperc,20,prBarCol);
-        setPercentageText(totalHours[3],Uniperc,20,prBarUni);
+        setPercentageText(totalHours[0],Uniperc,20,prBarUni);
+        setPercentageText(totalHours[1],AB1perc,40, prBarAB1);
+        setPercentageText(totalHours[2],AB2perc,40,prBarAB2);
+        setPercentageText(totalHours[3],Colperc,20,prBarCol);
 
         totalHours[4]= (gettotalcount(totalHours[0],40) + gettotalcount(totalHours[1],40)+
                 gettotalcount(totalHours[2],20)+ gettotalcount(totalHours[3],20));
 
         totalhrsofuser.setText(String.valueOf((int) totalHours[4]));
 
-        entries.add(new PieEntry((float) totalHours[0], "Area Base 1"));
-        entries.add(new PieEntry((float) totalHours[1], "Area Base 2"));
-        entries.add(new PieEntry((float) totalHours[2], "College"));
-        entries.add(new PieEntry((float) totalHours[3], "University"));
+        entries.add(new PieEntry((float) totalHours[0],"University"));
+        entries.add(new PieEntry((float) totalHours[1],"Area Base 1"));
+        entries.add(new PieEntry((float) totalHours[2],"Area Base 2"));
+        entries.add(new PieEntry((float) totalHours[3],"College"));
         entries.add(new PieEntry((float) (120 - totalHours[4]), ""));
 
         PieDataSet dataSet = new PieDataSet(entries, "");
@@ -379,12 +369,9 @@ public class VolHome extends Fragment {
                                         rootLocation.getlatitude(), rootLocation.getlongitude());
 
                                 if (distance <= VICINITY_RADIUS) {
-                                    databaseReferenceUser.child(UserName).child("status").setValue(1).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                        @Override
-                                        public void onComplete(@NonNull Task<Void> task) {
-                                            Toast.makeText(getContext(), "Attendance marked", Toast.LENGTH_SHORT).show();
-                                            marksuc.setText("Mark Successfully");
-                                        }
+                                    databaseReferenceUser.child(UserName).child("status").setValue(1).addOnCompleteListener(task -> {
+                                        Toast.makeText(getContext(), "Attendance marked", Toast.LENGTH_SHORT).show();
+                                        marksuc.setText("Mark Successfully");
                                     });
                                     fusedLocationProviderClient.removeLocationUpdates(locationCallback);
                                 }

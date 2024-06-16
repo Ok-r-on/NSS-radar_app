@@ -2,6 +2,30 @@
     <string name="app_name">NSS</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="mark">Mark</string>
+    <string name="radarimg">radarimg</string>
+    <string name="total_hours">Total Hours :</string>
+    <string name="_0">0</string>
+    <string name="area_base_1">Area Base 1</string>
+    <string name="percenta">%</string>
+    <string name="area_base_2">Area Base 2</string>
+    <string name="college">College</string>
+    <string name="university">University</string>
+    <string name="calendar">calendar</string>
+    <string name="eve_name_img">eve_name_img</string>
+    <string name="event_name">Event Name</string>
+    <string name="eve_date_img">eve_date_img</string>
+    <string name="date_val">16|04|2024</string>
+    <string name="present_img">present_img</string>
+    <string name="present">present</string>
+    <string name="hours_img">hours_img</string>
+    <string name="max_6">max 6</string>
+    <string name="hours">Hours :</string>
+    <string name="submit">submit</string>
+    <string name="stop">Stop</string>
+    <string name="start">Start</string>
+    <string name="initiate_radar">INITIATE RADAR</string>
+    <string name="close_radar_button">close radar button</string>
     <string-array name="dropdown_options_for_type">
         <item>Area Base 1</item>
         <item>Area Base 2</item>

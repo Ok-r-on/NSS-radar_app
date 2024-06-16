@@ -44,7 +44,10 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 
 public class Senior extends AppCompatActivity {
     EditText edtEventName,edtEventLoc;
@@ -198,7 +201,7 @@ public class Senior extends AppCompatActivity {
                             Toast.makeText(Senior.this, "Event with this name already exists", Toast.LENGTH_SHORT).show();
                         } else {
                             // Add the item to the database
-                            Schedule schedule = new Schedule(edate, etime,ename, etype[0],eloc);
+                            Schedule schedule = new Schedule(edate, etime,ename, etype[0],eloc, conv(edate));
                             databaseReference.child(edate).child(ename).setValue(schedule).addOnCompleteListener(task -> {
                                 if (task.isSuccessful()) {
                                     Toast.makeText(Senior.this, "Successfully Added", Toast.LENGTH_SHORT).show();
@@ -207,6 +210,16 @@ public class Senior extends AppCompatActivity {
                                     Toast.makeText(Senior.this, "Failed to add schedule", Toast.LENGTH_SHORT).show();
                                 }
                             });
+                        }
+                    }
+
+                    private long conv(String edate) {
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("dd|MM|yyyy");
+                        try {
+                            Date date = dateFormat.parse(edate);
+                            return date.getTime(); // Return Unix timestamp in milliseconds
+                        } catch (ParseException e) {
+                            throw new RuntimeException(e);
                         }
                     }
 
