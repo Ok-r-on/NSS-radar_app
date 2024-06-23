@@ -87,34 +87,40 @@ public class SrAttendance extends Fragment {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                     ArrayList<Attendance> fetchedattend = new ArrayList<>();
-                    if (dataSnapshot.exists() && dataSnapshot.hasChildren()) {
+                    if (dataSnapshot.exists()) {
+                        list.clear();
                         for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            if(snapshot.exists() && snapshot.hasChildren()){
-                                for(DataSnapshot shot : snapshot.getChildren()){
-                                    if(shot.exists()){
-                                        Attendance a = shot.getValue(Attendance.class);
-                                        boolean isAttendExists = false;
-                                        for (Attendance attendance : list) {
-                                            if(attendance.getCount().equals("") && a.getCount().equals("")){
-                                                attendance.setCount("0");
-                                                a.setCount("0");
-                                            }
-                                            if (attendance.getEventDate().equals(a.getEventDate()) &&
-                                                    attendance.getEventName().equals(a.getEventName()) &&
-                                                    attendance.getCount().equals(a.getCount())) {
-                                                isAttendExists = true;
-                                                break;
-                                            }
+                            for (DataSnapshot shot : snapshot.getChildren()) {
+                                Attendance a = shot.getValue(Attendance.class);
+                                if (a != null) {
+                                    boolean isAttendExists = false;
+                                    for (Attendance attendance : list) {
+                                        // Check for null counts and handle accordingly
+                                        if (attendance.getCount() == null && a.getCount() == null) {
+                                            isAttendExists = true;
+                                            break;
                                         }
-                                        if (!isAttendExists) {
-                                            fetchedattend.add(a);
+                                        // Check equality of event date, event name, and count
+                                        if (attendance.getEventDate() != null && attendance.getEventName() != null &&
+                                                attendance.getCount() != null && attendance.getEventDate().equals(a.getEventDate()) &&
+                                                attendance.getEventName().equals(a.getEventName()) &&
+                                                attendance.getCount().equals(a.getCount())) {
+                                            isAttendExists = true;
+                                            break;
                                         }
+                                    }
+                                    if (!isAttendExists) {
+                                        fetchedattend.add(a);
                                     }
                                 }
                             }
                         }
+                        // Sort fetchedattend by timestamp descending
+                        fetchedattend.sort((s1, s2) -> Long.compare(s2.getTmpstmp(), s1.getTmpstmp()));
+                        // Add all fetchedattend to list
                         list.addAll(fetchedattend);
                     } else {
+                        // Clear list if dataSnapshot does not exist or has no children
                         list.clear();
                     }
                     srAttendAdapter.notifyDataSetChanged();
@@ -168,34 +174,40 @@ public class SrAttendance extends Fragment {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 ArrayList<Attendance> fetchedattend = new ArrayList<>();
-                if (dataSnapshot.exists() && dataSnapshot.hasChildren()) {
+                if (dataSnapshot.exists()) {
+                    list.clear();
                     for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        if(snapshot.exists() && snapshot.hasChildren()){
-                            for(DataSnapshot shot : snapshot.getChildren()){
-                                if(shot.exists()){
-                                    Attendance a = shot.getValue(Attendance.class);
-                                    boolean isAttendExists = false;
-                                    for (Attendance attendance : list) {
-                                        if(attendance.getCount() == null && a.getCount()==null){
-                                            attendance.setCount("0");
-                                            a.setCount("0");
-                                        }
-                                        if (attendance.getEventDate().equals(a.getEventDate()) &&
-                                                 attendance.getEventName().equals(a.getEventName()) &&
-                                                attendance.getCount().equals(a.getCount())) {
-                                            isAttendExists = true;
-                                            break;
-                                        }
+                        for (DataSnapshot shot : snapshot.getChildren()) {
+                            Attendance a = shot.getValue(Attendance.class);
+                            if (a != null) {
+                                boolean isAttendExists = false;
+                                for (Attendance attendance : list) {
+                                    // Check for null counts and handle accordingly
+                                    if (attendance.getCount() == null && a.getCount() == null) {
+                                        isAttendExists = true;
+                                        break;
                                     }
-                                    if (!isAttendExists) {
-                                        fetchedattend.add(a);
+                                    // Check equality of event date, event name, and count
+                                    if (attendance.getEventDate() != null && attendance.getEventName() != null &&
+                                            attendance.getCount() != null && attendance.getEventDate().equals(a.getEventDate()) &&
+                                            attendance.getEventName().equals(a.getEventName()) &&
+                                            attendance.getCount().equals(a.getCount())) {
+                                        isAttendExists = true;
+                                        break;
                                     }
+                                }
+                                if (!isAttendExists) {
+                                    fetchedattend.add(a);
                                 }
                             }
                         }
                     }
+                    // Sort fetchedattend by timestamp descending
+                    fetchedattend.sort((s1, s2) -> Long.compare(s2.getTmpstmp(), s1.getTmpstmp()));
+                    // Add all fetchedattend to list
                     list.addAll(fetchedattend);
                 } else {
+                    // Clear list if dataSnapshot does not exist or has no children
                     list.clear();
                 }
                 srAttendAdapter.notifyDataSetChanged();
@@ -263,7 +275,7 @@ public class SrAttendance extends Fragment {
             cell.setPadding(4f);
             table1.addCell(cell);
 
-            cell = new PdfPCell(new Phrase("Names", FONT_COLUMN));
+            cell = new PdfPCell(new Phrase("User Names", FONT_COLUMN));
             cell.setHorizontalAlignment(Element.ALIGN_CENTER);
             cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
             cell.setPadding(4f);
@@ -300,8 +312,10 @@ public class SrAttendance extends Fragment {
             alternate = !alternate;
         }
 
+        String filename=generateFileName(ename,edate);
+
         try {
-            PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(getFilePath(generateFileName(ename,edate))));
+            PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(getFilePath(filename)));
             writer.setFullCompression();
             document.open();
             document.add(paragraph);
@@ -316,7 +330,7 @@ public class SrAttendance extends Fragment {
         }
     }
     public String generateFileName(String Ename, String Edate) {
-        return Ename.split("\\s+")[0] + Edate.replaceAll("\\|", "-");
+        return Ename.split("\\s+")[0] + "_" + Edate.replace("|", "-").replaceAll("-\\d{4}$", "") + ".pdf";
     }
     private String getFilePath(String Filename) {
         String folder = "NSS";

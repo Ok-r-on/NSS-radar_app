@@ -6,7 +6,7 @@
         <item name="android:windowExitAnimation">@android:anim/slide_out_right</item>
     </style>
     <style name="BlueProgressBar" parent="@android:style/Widget.ProgressBar.Horizontal">
-        <item name="android:progressTint">@color/darkblue</item>
+        <item name="android:progressTint">@color/lavendar</item>
         <item name="android:progressBackgroundTint">@color/grey</item>
     </style>
 </resources>

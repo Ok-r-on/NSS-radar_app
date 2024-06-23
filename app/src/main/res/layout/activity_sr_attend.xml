@@ -137,10 +137,11 @@
                     android:id="@+id/attendActhrs"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:inputType="number"
+                    android:gravity="center"
                     android:fontFamily="@font/poppins"
                     android:hint="@string/max_6"
-                    android:autofillHints=" " />
+                    android:inputType="number"
+                    tools:ignore="Autofill" />
 
             </LinearLayout>
         </LinearLayout>

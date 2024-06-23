@@ -33,6 +33,7 @@ import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -57,11 +58,10 @@ public class VolHome extends Fragment {
     FirebaseDatabase db;
     PieChart pieChart;
     CardView radarcard;
-    String UserName;
     TextView totalhrsofuser,AB1perc,AB2perc,Colperc,Uniperc,marksuc;
     ProgressBar prBarAB1,prBarAB2,prBarCol,prBarUni;
     Dialog dialog;
-    private static final float VICINITY_RADIUS = 10.0f;
+    private static final float VICINITY_RADIUS = 5.0f;
 
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationRequest locationRequest;
@@ -70,12 +70,13 @@ public class VolHome extends Fragment {
     public VolHome() {
         // Required empty public constructor
     }
+    private String UserName;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        SharedPreferences sharedPref = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        UserName = sharedPref.getString("UserName","");
+
         return inflater.inflate(R.layout.fragment_vol_home, container, false);
     }
 
@@ -133,21 +134,149 @@ public class VolHome extends Fragment {
 
         scheduleRef = db.getReference("Schedule");
 
-        scheduleRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                updateChart();
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
+        SharedPreferences sharedPref = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        UserName = sharedPref.getString("UserName", "");
 
+        if (!UserName.isEmpty()) {
+            updateChart(totalHours -> piechartfilling(pieChart, totalHours));
+        } else {
+            final double[] totalHours = new double[]{0, 0, 0, 0};
+            piechartfilling(pieChart, totalHours);
+        }
+    }
+    
+    private interface ChartUpdateCallback {
+        void onUpdate(double[] totalHours);
+    }
+    public void updateChart(final ChartUpdateCallback callback) {
+        final double[] totalHours = new double[]{0, 0, 0, 0};
+        scheduleRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (DataSnapshot eventDateSnapshot : dataSnapshot.getChildren()) {
+                    for (DataSnapshot eventNameSnapshot : eventDateSnapshot.getChildren()) {
+                        if(!eventNameSnapshot.child("hours").exists() && !eventNameSnapshot.child("Present").exists()){
+                            continue;
+                        }
+                        DataSnapshot presentSnapshot = eventNameSnapshot.child("Present");
+                        if (presentSnapshot.hasChild(UserName)) {
+                            String currentEventType = eventNameSnapshot.child("eventType").getValue(String.class);
+                            double hours = Double.parseDouble(eventNameSnapshot.child("hours").getValue(String.class));
+                            if (currentEventType != null) {
+                                switch (currentEventType) {
+                                    case "University":
+                                        totalHours[0] += hours;
+                                        break;
+                                    case "Area Base 1":
+                                        totalHours[1] += hours;
+                                        break;
+                                    case "Area Base 2":
+                                        totalHours[2] += hours;
+                                        break;
+                                    case "College":
+                                        totalHours[3] += hours;
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                }
+                callback.onUpdate(totalHours);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Handle the error
             }
         });
     }
 
+    private void piechartfilling(PieChart pieChart, double[] totalHours) {
+        List<PieEntry> entries = new ArrayList<>();
+
+        setPercentageText(totalHours[0],Uniperc,20,prBarUni);
+        setPercentageText(totalHours[1],AB1perc,40, prBarAB1);
+        setPercentageText(totalHours[2],AB2perc,40,prBarAB2);
+        setPercentageText(totalHours[3],Colperc,20,prBarCol);
+
+        int totalH= (gettotalcount(totalHours[0],40) + gettotalcount(totalHours[1],40)+
+                gettotalcount(totalHours[2],20)+ gettotalcount(totalHours[3],20));
+
+        totalhrsofuser.setText(String.valueOf(totalH));
+
+        if (totalHours[0] > 0) {
+            entries.add(new PieEntry((float) totalHours[0], "University"));
+        }
+        if (totalHours[1] > 0) {
+            entries.add(new PieEntry((float) totalHours[1], "AB 1"));
+        }
+        if (totalHours[2] > 0) {
+            entries.add(new PieEntry((float) totalHours[2], "AB 2"));
+        }
+        if (totalHours[3] > 0) {
+            entries.add(new PieEntry((float) totalHours[3], "College"));
+        }
+
+        PieDataSet dataSet = new PieDataSet(entries, "");
+        ValueFormatter valueFormatter = new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                return String.valueOf((int) value);
+            }
+        };
+
+        dataSet.setValueFormatter(valueFormatter);
+
+        int[] customColors = new int[entries.size()];
+        int colorIndex = 0;
+        if (totalHours[0] > 0) {
+            customColors[colorIndex++] = Color.argb(255, 102, 178, 255); // Soft blue for Uni
+        }
+        if (totalHours[1] > 0) {
+            customColors[colorIndex++] = Color.argb(255, 204, 102, 102); // Light blue for AB1
+        }
+        if (totalHours[2] > 0) {
+            customColors[colorIndex++] = Color.argb(255, 213, 166, 189); // Peach for AB2
+        }
+        if (totalHours[3] > 0) {
+            customColors[colorIndex] = Color.argb(255, 153, 204, 204); // Light teal for College
+        }
+        dataSet.setColors(customColors);
+
+        dataSet.setValueTextColor(Color.WHITE);
+        dataSet.setValueTextSize(12);
+
+        PieData data = new PieData(dataSet);
+        pieChart.setData(data);
+
+        pieChart.setHoleRadius(40f);
+        pieChart.animateXY(1000,500);
+        pieChart.setCenterText("More "+ (120- totalH) +" hours");
+        pieChart.setDrawRoundedSlices(true);
+        pieChart.setTransparentCircleRadius(45f);
+        pieChart.getLegend().setYOffset(10f);
+        pieChart.setEntryLabelColor(Color.TRANSPARENT);
+        pieChart.getLegend().setOrientation(Legend.LegendOrientation.HORIZONTAL);
+        pieChart.getLegend().setHorizontalAlignment(Legend.LegendHorizontalAlignment.LEFT);
+        pieChart.getLegend().setXEntrySpace(30f);
+        pieChart.getLegend().setXOffset(25f);
+        pieChart.getLegend().setTextSize(15f);
+        pieChart.getDescription().setEnabled(false);
+        pieChart.invalidate(); // refresh
+    }
+    private void setPercentageText(double totalHours, TextView perc, int divisor, ProgressBar prBar) {
+        int percentage = totalHours <= divisor ? (int) (totalHours / divisor * 100) : 100;
+        perc.setText(percentage + "%");
+        prBar.setProgress(percentage);
+    }
+    public int gettotalcount(double totalHours, int divisor){
+        return totalHours < divisor ? (int) totalHours : divisor;
+    }
     private void showmarkingdialog() {
         dialog = new Dialog(getContext());
         dialog.setContentView(R.layout.dialog_mark_radar);
+
+        dialog.setCanceledOnTouchOutside(false);
 
         closeradarbtn_vol=dialog.findViewById(R.id.closeradarbtn_vol);
         mark=dialog.findViewById(R.id.markbtn);
@@ -167,176 +296,6 @@ public class VolHome extends Fragment {
         dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
         dialog.getWindow().setGravity(Gravity.CENTER);
     }
-
-    public void updateChart(){
-        final double[] totalHours = new double[]{0, 0, 0, 0, 0};
-        //For University
-        scheduleRef.orderByChild("eventType").equalTo("University").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-
-                for (DataSnapshot eventDateSnapshot : dataSnapshot.getChildren()) {
-
-                    for (DataSnapshot eventNameSnapshot : eventDateSnapshot.getChildren()) {
-
-                        for (DataSnapshot presentSnapshot : eventNameSnapshot.child("Present").getChildren()) {
-                            String presentUser = presentSnapshot.getKey();
-
-                            if (presentUser.equals(UserName)) {
-                                double hours = eventNameSnapshot.child("hours").getValue(Double.class);
-                                totalHours[0] += hours;
-                            }
-                        }
-                    }
-                }
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Handle the error
-            }
-        });
-        //for Area Base 1
-        scheduleRef.orderByChild("eventType").equalTo("Area Base 1").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-
-                for (DataSnapshot eventDateSnapshot : dataSnapshot.getChildren()) {
-
-                    for (DataSnapshot eventNameSnapshot : eventDateSnapshot.getChildren()) {
-
-                        for (DataSnapshot presentSnapshot : eventNameSnapshot.child("Present").getChildren()) {
-                            String presentUser = presentSnapshot.getKey();
-
-                            if (presentUser.equals(UserName)) {
-                                double hours = eventNameSnapshot.child("hours").getValue(Double.class);
-                                totalHours[1] += hours;
-                            }
-                        }
-                    }
-                }
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Handle the error
-            }
-        });
-        //for Area Base 2
-        scheduleRef.orderByChild("eventType").equalTo("Area Base 2").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-
-                for (DataSnapshot eventDateSnapshot : dataSnapshot.getChildren()) {
-
-                    for (DataSnapshot eventNameSnapshot : eventDateSnapshot.getChildren()) {
-
-                        for (DataSnapshot presentSnapshot : eventNameSnapshot.child("Present").getChildren()) {
-                            String presentUser = presentSnapshot.getKey();
-
-                            if (presentUser.equals(UserName)) {
-                                double hours = eventNameSnapshot.child("hours").getValue(Double.class);
-                                totalHours[2] += hours;
-                            }
-                        }
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Handle the error
-            }
-        });
-        //for College
-        scheduleRef.orderByChild("eventType").equalTo("College").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-
-                for (DataSnapshot eventDateSnapshot : dataSnapshot.getChildren()) {
-
-                    for (DataSnapshot eventNameSnapshot : eventDateSnapshot.getChildren()) {
-
-                        for (DataSnapshot presentSnapshot : eventNameSnapshot.child("Present").getChildren()) {
-                            String presentUser = presentSnapshot.getKey();
-
-                            if (presentUser.equals(UserName)) {
-                                double hours = eventNameSnapshot.child("hours").getValue(Double.class);
-                                totalHours[3] += hours;
-                            }
-                        }
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Handle the error
-            }
-        });
-
-        piechartfilling(pieChart,totalHours);
-    }
-
-    private void piechartfilling(PieChart pieChart, double[] totalHours) {
-        List<PieEntry> entries = new ArrayList<>();
-
-        setPercentageText(totalHours[0],Uniperc,20,prBarUni);
-        setPercentageText(totalHours[1],AB1perc,40, prBarAB1);
-        setPercentageText(totalHours[2],AB2perc,40,prBarAB2);
-        setPercentageText(totalHours[3],Colperc,20,prBarCol);
-
-        totalHours[4]= (gettotalcount(totalHours[0],40) + gettotalcount(totalHours[1],40)+
-                gettotalcount(totalHours[2],20)+ gettotalcount(totalHours[3],20));
-
-        totalhrsofuser.setText(String.valueOf((int) totalHours[4]));
-
-        entries.add(new PieEntry((float) totalHours[0],"University"));
-        entries.add(new PieEntry((float) totalHours[1],"Area Base 1"));
-        entries.add(new PieEntry((float) totalHours[2],"Area Base 2"));
-        entries.add(new PieEntry((float) totalHours[3],"College"));
-        entries.add(new PieEntry((float) (120 - totalHours[4]), ""));
-
-        PieDataSet dataSet = new PieDataSet(entries, "");
-
-        int[] customColors = new int[entries.size()];
-        customColors[0] = Color.argb(45,204,112,255);
-        customColors[1] = Color.argb(232,76,61,255);
-        customColors[2] = Color.argb(241,196,15,255);
-        customColors[3] = Color.argb(53,152,219,255);
-        customColors[4] = Color.TRANSPARENT;
-        dataSet.setColors(customColors);
-
-        dataSet.setValueTextColor(Color.TRANSPARENT);
-        dataSet.setValueTextSize(12f);
-
-        PieData data = new PieData(dataSet);
-        pieChart.setData(data);
-
-
-        pieChart.setHoleRadius(40f);
-        pieChart.animateXY(1000,500);
-        pieChart.setCenterText("Out of 120 hours");
-        pieChart.setDrawRoundedSlices(true);
-        pieChart.setTransparentCircleRadius(45f);
-        pieChart.getLegend().setYOffset(10f);
-        pieChart.setEntryLabelColor(Color.TRANSPARENT);
-        pieChart.getLegend().setOrientation(Legend.LegendOrientation.HORIZONTAL);
-        pieChart.getLegend().setHorizontalAlignment(Legend.LegendHorizontalAlignment.LEFT);
-        pieChart.getLegend().setXEntrySpace(30f);
-        pieChart.getLegend().setXOffset(25f);
-        pieChart.getLegend().setTextSize(15f);
-        pieChart.getDescription().setEnabled(false);
-        pieChart.invalidate(); // refresh
-    }
-
-    private void setPercentageText(double totalHours, TextView perc, int divisor, ProgressBar prBar) {
-        int percentage = totalHours <= divisor ? (int) (totalHours / divisor * 100) : 100;
-        perc.setText(percentage + "%");
-        prBar.setProgress(percentage);
-    }
-    public int gettotalcount(double totalHours, int divisor){
-        return totalHours < divisor ? (int) totalHours : divisor;
-    }
-
     private float calculateDistance(double userLat, double userLng, double rootLat, double rootLng) {
         Location locationUser = new Location("");
         locationUser.setLatitude(userLat);
@@ -348,7 +307,6 @@ public class VolHome extends Fragment {
 
         return locationUser.distanceTo(locationRoot);
     }
-
     public void getandsetlocation() {
         if (ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(getActivity(), new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_CODE);
@@ -369,14 +327,12 @@ public class VolHome extends Fragment {
                                         rootLocation.getlatitude(), rootLocation.getlongitude());
 
                                 if (distance <= VICINITY_RADIUS) {
-                                    databaseReferenceUser.child(UserName).child("status").setValue(1).addOnCompleteListener(task -> {
-                                        Toast.makeText(getContext(), "Attendance marked", Toast.LENGTH_SHORT).show();
-                                        marksuc.setText("Mark Successfully");
-                                    });
+                                    databaseReferenceUser.child(UserName).child("status").setValue(1).addOnCompleteListener(task -> marksuc.setText("Mark Successfully"));
                                     fusedLocationProviderClient.removeLocationUpdates(locationCallback);
                                 }
                                 else {
                                     marksuc.setText("Not In Range");
+                                    //marksuc.setVisibility(View.VISIBLE);
                                 }
                             }
                         }
@@ -394,7 +350,6 @@ public class VolHome extends Fragment {
             fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, null);
         }
     }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);

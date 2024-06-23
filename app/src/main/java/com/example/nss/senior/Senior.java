@@ -194,7 +194,7 @@ public class Senior extends AppCompatActivity {
 
             if (!ename.isEmpty() && !edate.contains("-") && !eloc.isEmpty() && !etime.contains("-") && !etype[0].isEmpty()) {
                 // Check if the item already exists in the database
-                databaseReference.child(edate).addListenerForSingleValueEvent(new ValueEventListener() {
+                databaseReference.child(edate).child(ename).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         if (dataSnapshot.exists()) {

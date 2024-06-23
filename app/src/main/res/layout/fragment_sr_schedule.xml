@@ -9,28 +9,25 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        tools:ignore="UselessParent">
     <ImageButton
         android:id="@+id/setDateSched"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:src="@drawable/calendar"
         android:background="?attr/selectableItemBackground"
-        android:contentDescription="calendar"
+        android:contentDescription="@string/calendar"
         tools:ignore="TouchTargetSizeCheck"
+        android:paddingBottom="4dp"
         android:layout_gravity="end"
         />
-        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-            android:id="@+id/swipetorefreshsched"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/ScheduleListSenior"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"/>
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/ScheduleListSenior"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
 
-        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     </LinearLayout>
 

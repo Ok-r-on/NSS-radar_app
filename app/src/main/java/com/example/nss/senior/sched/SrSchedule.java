@@ -154,6 +154,8 @@ public class SrSchedule extends Fragment {
                 Dialog dialog = new Dialog(getContext());
                 dialog.setContentView(R.layout.dialog_start_stop_radar);
 
+                dialog.setCanceledOnTouchOutside(false);
+
                 radStart=dialog.findViewById(R.id.radStart);
                 radStop=dialog.findViewById(R.id.radStop);
                 markinSr=dialog.findViewById(R.id.markinSr);
@@ -165,7 +167,7 @@ public class SrSchedule extends Fragment {
                 closeradarbtn.setOnClickListener(v -> dialog.dismiss());
 
                 radStart.setOnClickListener(v -> {
-                    markinSr.setText("Detecting....");
+                    markinSr.setText("Detecting...");
                     getLocationofRoot();
                     radStop.setVisibility(View.VISIBLE);
                     radStart.setVisibility(View.GONE);

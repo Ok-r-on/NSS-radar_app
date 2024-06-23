@@ -81,8 +81,6 @@ public class SrAttendActivity extends AppCompatActivity {
                         if (dataSnapshot.exists()) {
                             String hrs = dataSnapshot.getValue(String.class);
                             attendActhrs.setText(hrs);
-                        } else {
-                            attendActhrs.setText("--");
                         }
                     }
 
@@ -131,7 +129,7 @@ public class SrAttendActivity extends AppCompatActivity {
 
         submitattend.setOnClickListener(v -> {
             String hrs= attendActhrs.getText().toString().trim();
-            if(Double.parseDouble(hrs) <= 6.0 && !hrs.isEmpty()){
+            if(!hrs.isEmpty() && Double.parseDouble(hrs) <= 6.0){
                 if (EDate != null && EveName != null) {
                     scheduleReference = db.getReference("Schedule").child(EDate).child(EveName);
                 }

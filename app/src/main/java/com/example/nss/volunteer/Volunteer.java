@@ -51,6 +51,7 @@ public class Volunteer extends AppCompatActivity {
         setSupportActionBar(toolbar);
         toolbar.setTitle(UserName);
 
+
         ViewPager viewPager = findViewById(R.id.view_pagerVol);
         VolunteerVPAdapter adapter = new VolunteerVPAdapter(getSupportFragmentManager(), FragmentPagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
         adapter.addFragment(new VolHome());

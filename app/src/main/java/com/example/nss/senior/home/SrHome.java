@@ -19,6 +19,7 @@ import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -31,7 +32,6 @@ import java.util.List;
 public class SrHome extends Fragment {
     DatabaseReference scheduleRef;
     FirebaseDatabase db;
-    PieChart pieChart;
     TextView totalhrs,AB1percSr,AB2percSr,ColpercSr,UnipercSr;
     ProgressBar prBarAB1_Sr,prBarAB2_Sr,prBarCol_Sr,prBarUni_Sr;
     @Override
@@ -48,8 +48,7 @@ public class SrHome extends Fragment {
         db= FirebaseDatabase.getInstance();
         scheduleRef = db.getReference("Schedule");
 
-
-        pieChart= view.findViewById(R.id.piechartforsr);
+        PieChart pieChart= view.findViewById(R.id.piechartforsr);
 
         totalhrs=view.findViewById(R.id.totalhrs);
         AB1percSr=view.findViewById(R.id.AB1percSr);
@@ -65,7 +64,12 @@ public class SrHome extends Fragment {
         scheduleRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                updateChart();
+
+                updateChart(totalHours -> {
+                    piechartfilling(pieChart,totalHours);
+                    // You can now safely use the totalHours array here
+                });
+
             }
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
@@ -74,94 +78,54 @@ public class SrHome extends Fragment {
         });
 
     }
-    public void updateChart(){
-        final double[] totalHours = new double[]{0, 0, 0, 0};
-        //For University
-        scheduleRef.orderByChild("eventType").equalTo("University").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-
-                for (DataSnapshot eventDateSnapshot : dataSnapshot.getChildren()) {
-
-                    for (DataSnapshot eventNameSnapshot : eventDateSnapshot.getChildren()) {
-
-                        double hours = eventNameSnapshot.child("hours").getValue(Double.class);
-                        totalHours[0] += hours;
-                    }
-                }
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Handle the error
-            }
-        });
-        //for Area Base 1
-        scheduleRef.orderByChild("eventType").equalTo("Area Base 1").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-
-                for (DataSnapshot eventDateSnapshot : dataSnapshot.getChildren()) {
-
-                    for (DataSnapshot eventNameSnapshot : eventDateSnapshot.getChildren()) {
-
-                        double hours = eventNameSnapshot.child("hours").getValue(Double.class);
-                        totalHours[1] += hours;
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Handle the error
-            }
-        });
-        //for Area Base 2
-        scheduleRef.orderByChild("eventType").equalTo("Area Base 2").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-
-                for (DataSnapshot eventDateSnapshot : dataSnapshot.getChildren()) {
-
-                    for (DataSnapshot eventNameSnapshot : eventDateSnapshot.getChildren()) {
-
-                        double hours = eventNameSnapshot.child("hours").getValue(Double.class);
-                        totalHours[2] += hours;
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Handle the error
-            }
-        });
-        //for College
-        scheduleRef.orderByChild("eventType").equalTo("College").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-
-                for (DataSnapshot eventDateSnapshot : dataSnapshot.getChildren()) {
-
-                    for (DataSnapshot eventNameSnapshot : eventDateSnapshot.getChildren()) {
-
-                        double hours = eventNameSnapshot.child("hours").getValue(Double.class);
-                        totalHours[3] += hours;
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Handle the error
-            }
-        });
-
-        piechartfilling(pieChart,totalHours);
+    private interface ChartUpdateCallback {
+        void onUpdate(double[] totalHours);
     }
+
+    public void updateChart(final ChartUpdateCallback callback) {
+        final double[] totalHours = new double[]{0, 0, 0, 0};
+        scheduleRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (DataSnapshot eventDateSnapshot : dataSnapshot.getChildren()) {
+                    for (DataSnapshot eventNameSnapshot : eventDateSnapshot.getChildren()) {
+                        String currentEventType = eventNameSnapshot.child("eventType").getValue(String.class);
+                        if(!eventNameSnapshot.child("hours").exists()){
+                            continue;
+                        }
+                        Double hours = Double.valueOf(eventNameSnapshot.child("hours").getValue(String.class));
+                        if (currentEventType != null) {
+                            switch (currentEventType) {
+                                case "University":
+                                    totalHours[0] += hours;
+                                    break;
+                                case "Area Base 1":
+                                    totalHours[1] += hours;
+                                    break;
+                                case "Area Base 2":
+                                    totalHours[2] += hours;
+                                    break;
+                                case "College":
+                                    totalHours[3] += hours;
+                                    break;
+                            }
+                        }
+                    }
+                }
+                callback.onUpdate(totalHours);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Handle the error
+            }
+        });
+    }
+
 
     private void piechartfilling(PieChart pieChart, double[] totalHours) {
         List<PieEntry> entries = new ArrayList<>();
-        setPercentageText(totalHours[1],UnipercSr,20,prBarUni_Sr);
+        setPercentageText(totalHours[0],UnipercSr,20,prBarUni_Sr);
         setPercentageText(totalHours[1],AB1percSr,40, prBarAB1_Sr);
         setPercentageText(totalHours[2],AB2percSr,40,prBarAB2_Sr);
         setPercentageText(totalHours[3],ColpercSr,20,prBarCol_Sr);
@@ -170,26 +134,51 @@ public class SrHome extends Fragment {
 
         totalhrs.setText(String.valueOf(tot));
 
-        entries.add(new PieEntry((float) totalHours[0], "University"));
-        entries.add(new PieEntry((float) totalHours[1], "Area Base 1"));
-        entries.add(new PieEntry((float) totalHours[2], "Area Base 2"));
-        entries.add(new PieEntry((float) totalHours[3], "College"));
+        if (totalHours[0] > 0) {
+            entries.add(new PieEntry((float) totalHours[0], "University"));
+        }
+        if (totalHours[1] > 0) {
+            entries.add(new PieEntry((float) totalHours[1], "AB 1"));
+        }
+        if (totalHours[2] > 0) {
+            entries.add(new PieEntry((float) totalHours[2], "AB 2"));
+        }
+        if (totalHours[3] > 0) {
+            entries.add(new PieEntry((float) totalHours[3], "College"));
+        }
 
         PieDataSet dataSet = new PieDataSet(entries, "");
 
+        ValueFormatter valueFormatter = new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                return String.valueOf((int) value);
+            }
+        };
+
+        dataSet.setValueFormatter(valueFormatter);
+
         int[] customColors = new int[entries.size()];
-        customColors[0] = Color.argb(45,204,112,255);
-        customColors[1] = Color.argb(232,76,61,255);
-        customColors[2] = Color.argb(241,196,15,255);
-        customColors[3] = Color.argb(53,152,219,255);
+        int colorIndex = 0;
+        if (totalHours[0] > 0) {
+            customColors[colorIndex++] = Color.argb(255, 102, 178, 255); // Soft blue for Uni
+        }
+        if (totalHours[1] > 0) {
+            customColors[colorIndex++] = Color.argb(255, 204, 102, 102); // Light blue for AB1
+        }
+        if (totalHours[2] > 0) {
+            customColors[colorIndex++] = Color.argb(255, 213, 166, 189); // Peach for AB2
+        }
+        if (totalHours[3] > 0) {
+            customColors[colorIndex] = Color.argb(255, 153, 204, 204); // Light teal for College
+        }
         dataSet.setColors(customColors);
 
-        dataSet.setValueTextColor(Color.TRANSPARENT);
+        dataSet.setValueTextColor(Color.WHITE);
         dataSet.setValueTextSize(12f);
 
         PieData data = new PieData(dataSet);
         pieChart.setData(data);
-
 
         pieChart.setHoleRadius(40f);
         pieChart.animateXY(1000,500);
